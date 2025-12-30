@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
@@ -155,7 +156,9 @@ struct SettingsView: View {
                 
                 // Mes autres apps
                 Section {
-                    Link(destination: URL(string: "https://apps.apple.com/fr/app/monmikve/id6756859431")!) {
+                    Button {
+                        AppStoreHelper.shared.presentAppStore(appId: "6756859431")
+                    } label: {
                         HStack(spacing: 14) {
                             Image("monMikve")
                                 .resizable()
@@ -175,13 +178,16 @@ struct SettingsView: View {
                             
                             Spacer()
                             
-                            Image(systemName: "arrow.up.right.square")
+                            Image(systemName: "chevron.right")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.tertiary)
                         }
                     }
+                    .buttonStyle(.plain)
                     
-                    Link(destination: URL(string: "https://apps.apple.com/fr/app/monperekchira/id6754168509")!) {
+                    Button {
+                        AppStoreHelper.shared.presentAppStore(appId: "6754168509")
+                    } label: {
                         HStack(spacing: 14) {
                             Image("monPerekChira")
                                 .resizable()
@@ -201,11 +207,12 @@ struct SettingsView: View {
                             
                             Spacer()
                             
-                            Image(systemName: "arrow.up.right.square")
+                            Image(systemName: "chevron.right")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.tertiary)
                         }
                     }
+                    .buttonStyle(.plain)
                 } header: {
                     Text("Mes autres apps")
                 }
@@ -635,6 +642,51 @@ struct SettingsContentView: View {
     var body: some View {
         SettingsView()
             .navigationBarHidden(true)
+    }
+}
+
+// MARK: - App Store Helper
+class AppStoreHelper: NSObject, SKStoreProductViewControllerDelegate {
+    static let shared = AppStoreHelper()
+    
+    private override init() {
+        super.init()
+    }
+    
+    func presentAppStore(appId: String) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else {
+            return
+        }
+        
+        // Trouver le view controller le plus en avant
+        var topVC = rootVC
+        while let presented = topVC.presentedViewController {
+            topVC = presented
+        }
+        
+        let storeVC = SKStoreProductViewController()
+        storeVC.delegate = self
+        
+        let parameters: [String: Any] = [
+            SKStoreProductParameterITunesItemIdentifier: NSNumber(value: Int(appId) ?? 0)
+        ]
+        
+        // Présenter immédiatement (l'App Store affiche son propre loader)
+        topVC.present(storeVC, animated: true)
+        
+        storeVC.loadProduct(withParameters: parameters) { success, error in
+            if !success {
+                print("Failed to load product: \(error?.localizedDescription ?? "Unknown error")")
+                DispatchQueue.main.async {
+                    storeVC.dismiss(animated: true)
+                }
+            }
+        }
+    }
+    
+    func productViewControllerDidFinish(_ viewController: SKStoreProductViewController) {
+        viewController.dismiss(animated: true)
     }
 }
 
