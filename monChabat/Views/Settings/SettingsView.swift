@@ -113,21 +113,6 @@ struct SettingsView: View {
                 }
                 .tint(Color.shabGold)
                 
-                // Data Section
-                Section("Données") {
-                    NavigationLink {
-                        DataManagementView()
-                    } label: {
-                        Label("Gestion des données", systemImage: "externaldrive")
-                    }
-                    
-                    Button(role: .destructive) {
-                        // Reset weekly data
-                    } label: {
-                        Label("Réinitialiser la check-list", systemImage: "arrow.counterclockwise")
-                    }
-                }
-                
                 // About Section
                 Section("À propos") {
                     NavigationLink {
@@ -142,11 +127,19 @@ struct SettingsView: View {
                         Label("Politique de confidentialité", systemImage: "hand.raised")
                     }
                     
-                    Link(destination: URL(string: "https://hebcal.com")!) {
+                    Button {
+                        let email = "contact@yohannn.com"
+                        let subject = "monChabat - Contact"
+                        let body = "Bonjour,\n\n"
+                        
+                        if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
                         HStack {
-                            Label("Hebcal API", systemImage: "link")
+                            Label("Nous contacter", systemImage: "envelope")
                             Spacer()
-                            Image(systemName: "arrow.up.right.square")
+                            Text("Suggestions, bugs...")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

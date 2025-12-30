@@ -48,7 +48,11 @@ struct monChabatApp: App {
 
 // MARK: - App State
 class AppState: ObservableObject {
-    @Published var isDarkMode: Bool = false
+    @Published var isDarkMode: Bool {
+        didSet {
+            UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode")
+        }
+    }
     @Published var isPanicMode: Bool = false
     @Published var selectedTab: Tab = .accueil
     @Published var showOnboarding: Bool = false
@@ -59,5 +63,9 @@ class AppState: ObservableObject {
         case maison
         case recipes
         case settings
+    }
+    
+    init() {
+        self.isDarkMode = UserDefaults.standard.bool(forKey: "isDarkMode")
     }
 }

@@ -63,16 +63,10 @@ struct GlobalHeader: View {
                 .frame(height: 0)
             
             HStack {
-                // Logo et titre
-                HStack(spacing: 10) {
-                    Image(systemName: "flame.fill")
-                        .font(.title2)
-                        .foregroundStyle(Color.shabGold)
-                    
-                    Text("monChabat")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                }
+                // Titre
+                Text("monChabat")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 

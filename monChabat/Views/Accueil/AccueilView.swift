@@ -385,13 +385,11 @@ struct UpcomingEventCard: View {
         .padding(14)
         .background {
             RoundedRectangle(cornerRadius: 14)
-                .fill(event.type == .yomTov 
-                      ? Color.shabGold.opacity(0.08)
-                      : Color.shabDeepBlue.opacity(0.08))
+                .fill(Color(UIColor.secondarySystemBackground))
         }
         .overlay {
             RoundedRectangle(cornerRadius: 14)
-                .stroke(event.type.color.opacity(0.2), lineWidth: 1)
+                .stroke(event.type.color.opacity(0.4), lineWidth: 1)
         }
     }
 }
