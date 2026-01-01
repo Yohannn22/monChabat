@@ -13,15 +13,15 @@ extension Color {
     // Couleurs principales - Teintes chaudes pour Shabbat
     static let shabGold = Color(red: 0.95, green: 0.78, blue: 0.45)
     static let shabWarmWhite = Color(red: 1.0, green: 0.98, blue: 0.94)
-    static let shabDeepBlue = Color(red: 0.15, green: 0.22, blue: 0.35)
-    static let shabSoftPurple = Color(red: 0.45, green: 0.35, blue: 0.55)
+    static let shabDeepBlue = Color(red: 0.25, green: 0.40, blue: 0.60) // Bleu profond lisible
+    static let shabSoftPurple = Color(red: 0.55, green: 0.40, blue: 0.70) // Violet plus foncé, lisible en clair et sombre
     static let shabCandleOrange = Color(red: 1.0, green: 0.65, blue: 0.3)
-    static let shabBlue = Color(red: 0.35, green: 0.55, blue: 0.85) // Bleu pour la famille
+    static let shabBlue = Color(red: 0.30, green: 0.55, blue: 0.85) // Bleu lisible dans les deux modes
     
     // Couleurs pour les catégories
-    static let meatRed = Color(red: 0.85, green: 0.25, blue: 0.25)
-    static let dairyBlue = Color(red: 0.4, green: 0.7, blue: 0.95)
-    static let parveGreen = Color(red: 0.35, green: 0.75, blue: 0.45)
+    static let meatRed = Color(red: 0.85, green: 0.30, blue: 0.30)
+    static let dairyBlue = Color(red: 0.35, green: 0.60, blue: 0.90)
+    static let parveGreen = Color(red: 0.30, green: 0.70, blue: 0.45)
     
     // Glass colors
     static let glassBackground = Color.white.opacity(0.15)

@@ -9,7 +9,6 @@ import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject var appState: AppState
-    @Namespace private var tabAnimation
     @State private var showingSettings = false
     
     var body: some View {
@@ -18,32 +17,25 @@ struct MainTabView: View {
             GlobalHeader(showingSettings: $showingSettings)
             
             // Content
-            ZStack(alignment: .bottom) {
-                TabView(selection: $appState.selectedTab) {
+            TabView(selection: $appState.selectedTab) {
+                Tab("Accueil", systemImage: "flame.fill", value: AppState.Tab.accueil) {
                     AccueilContentView()
-                        .tag(AppState.Tab.accueil)
-                        .toolbar(.hidden, for: .tabBar)
-                    
-                    GuestsContentView()
-                        .tag(AppState.Tab.guests)
-                        .toolbar(.hidden, for: .tabBar)
-                    
-                    MaisonContentView()
-                        .tag(AppState.Tab.maison)
-                        .toolbar(.hidden, for: .tabBar)
-                    
-                    RecipesContentView()
-                        .tag(AppState.Tab.recipes)
-                        .toolbar(.hidden, for: .tabBar)
                 }
                 
-                // Custom Glass Tab Bar
-                GlassTabBar(selectedTab: $appState.selectedTab, namespace: tabAnimation)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
+                Tab("Invités", systemImage: "person.2.fill", value: AppState.Tab.guests) {
+                    GuestsContentView()
+                }
+                
+                Tab("Maison", systemImage: "house.fill", value: AppState.Tab.maison) {
+                    MaisonContentView()
+                }
+                
+                Tab("Recettes", systemImage: "book.fill", value: AppState.Tab.recipes) {
+                    RecipesContentView()
+                }
             }
+            .tint(Color.shabGold)
         }
-        .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
@@ -63,10 +55,16 @@ struct GlobalHeader: View {
                 .frame(height: 0)
             
             HStack {
-                // Titre
+                // Titre avec dégradé
                 Text("monChabat")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.shabGold, Color.shabCandleOrange],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                 
                 Spacer()
                 
@@ -75,9 +73,9 @@ struct GlobalHeader: View {
                     showingSettings = true
                 } label: {
                     Image(systemName: "gearshape.fill")
-                        .font(.title3)
+                        .font(.body)
                         .foregroundStyle(Color.primary.opacity(0.7))
-                        .padding(10)
+                        .padding(8)
                         .background {
                             Circle()
                                 .fill(Color(UIColor.secondarySystemBackground))
@@ -87,7 +85,7 @@ struct GlobalHeader: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
         }
         .background(Color.shabGold.opacity(0.25))
         .overlay(alignment: .bottom) {
@@ -95,72 +93,6 @@ struct GlobalHeader: View {
                 .fill(Color.shabGold.opacity(0.6))
                 .frame(height: 1.5)
         }
-    }
-}
-
-// MARK: - Glass Tab Bar
-struct GlassTabBar: View {
-    @Binding var selectedTab: AppState.Tab
-    var namespace: Namespace.ID
-    
-    private let tabs: [(AppState.Tab, String, String)] = [
-        (.accueil, "flame.fill", "Accueil"),
-        (.guests, "person.2.fill", "Invités"),
-        (.maison, "house.fill", "Maison"),
-        (.recipes, "book.fill", "Recettes")
-    ]
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(tabs, id: \.0) { tab, icon, title in
-                TabBarButton(
-                    icon: icon,
-                    title: title,
-                    isSelected: selectedTab == tab
-                ) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        selectedTab = tab
-                    }
-                    HapticManager.selection()
-                }
-            }
-        }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 6)
-        .background {
-            Capsule()
-                .fill(.regularMaterial)
-                .shadow(color: Color.black.opacity(0.1), radius: 8, y: 4)
-        }
-    }
-}
-
-// MARK: - Tab Bar Button
-struct TabBarButton: View {
-    let icon: String
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                
-                Text(title)
-                    .font(.system(size: 10, weight: .medium))
-            }
-            .foregroundStyle(isSelected ? .white : Color.primary.opacity(0.5))
-            .frame(width: 75, height: 52)
-            .background {
-                if isSelected {
-                    Capsule()
-                        .fill(Color.shabGold.opacity(0.9))
-                }
-            }
-        }
-        .buttonStyle(.plain)
     }
 }
 

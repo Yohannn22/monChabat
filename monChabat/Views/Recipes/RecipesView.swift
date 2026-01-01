@@ -11,17 +11,23 @@ import SwiftData
 
 struct RecipesView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var appState: AppState
     @Query(sort: \Recipe.name) private var recipes: [Recipe]
     
     @State private var searchText = ""
     @State private var selectedCategory: RecipeCategory? = nil
     @State private var selectedKashrout: KashroutType? = nil
+    @State private var showFavoritesOnly = false
     @State private var showingAddRecipe = false
     @State private var showingHallaTimer = false
     @FocusState private var isSearchFocused: Bool
     
     var filteredRecipes: [Recipe] {
         var result = recipes
+        
+        if showFavoritesOnly {
+            result = result.filter { $0.isFavorite }
+        }
         
         if !searchText.isEmpty {
             result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
@@ -196,6 +202,28 @@ struct RecipesView: View {
     // MARK: - Kashrout Filter
     private var kashroutFilter: some View {
         HStack(spacing: 10) {
+            // Bouton Favoris
+            Button {
+                withAnimation {
+                    showFavoritesOnly.toggle()
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: showFavoritesOnly ? "heart.fill" : "heart")
+                        .font(.caption)
+                    Text("Favoris")
+                        .font(.caption)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background {
+                    Capsule()
+                        .fill(showFavoritesOnly ? Color.red.opacity(0.2) : Color(UIColor.secondarySystemBackground))
+                }
+                .foregroundStyle(showFavoritesOnly ? .red : .primary)
+            }
+            .buttonStyle(.plain)
+            
             ForEach(KashroutType.allCases, id: \.self) { type in
                 Button {
                     withAnimation {
@@ -1957,7 +1985,9 @@ struct RecipeDetailView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 100)
         }
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+        .background(SwipeBackGestureEnabler())
         .sheet(isPresented: $showingEditSheet) {
             EditRecipeSheet(recipe: recipe)
         }
@@ -3173,8 +3203,28 @@ struct RecipesContentView: View {
     }
 }
 
+// MARK: - Swipe Back Gesture Enabler
+struct SwipeBackGestureEnabler: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        let controller = SwipeBackViewController()
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}
+
+class SwipeBackViewController: UIViewController {
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Réactiver le swipe back même quand la navbar est cachée
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+        navigationController?.interactivePopGestureRecognizer?.delegate = nil
+    }
+}
+
 #Preview {
     RecipesView()
+        .environmentObject(AppState())
         .environmentObject(NotificationManager())
         .modelContainer(for: Recipe.self, inMemory: true)
 }

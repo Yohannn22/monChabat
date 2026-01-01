@@ -31,12 +31,8 @@ struct GuestsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Add person button (compact, en haut à droite)
-                        addPersonButton
-                            .padding(.top, 8)
-                        
-                        // Stats Header
-                        statsHeader
+                        // Stats Header avec bouton intégré
+                        statsHeaderWithButton
                         
                         // Section Picker
                         sectionPicker
@@ -85,7 +81,55 @@ struct GuestsView: View {
         }
     }
     
-    // MARK: - Stats Header
+    // MARK: - Stats Header avec Bouton Ajouter
+    private var statsHeaderWithButton: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                StatCard(
+                    icon: "person.2.fill",
+                    value: "\(guests.count)",
+                    label: "Personnes",
+                    color: .shabGold
+                )
+                
+                StatCard(
+                    icon: "house.fill",
+                    value: "\(guests.filter { $0.isFamily }.count)",
+                    label: "Famille",
+                    color: .shabBlue
+                )
+                
+                StatCard(
+                    icon: "chair.fill",
+                    value: "\(guests.filter { $0.tablePosition != nil }.count)",
+                    label: "Placés",
+                    color: .shabSoftPurple
+                )
+            }
+            
+            // Bouton Ajouter intégré
+            Button {
+                showingAddGuest = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 15, weight: .medium))
+                    Text("Ajouter un invité")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color.shabGold)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: Color.shabGold.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.top, 8)
+    }
+    
+    // MARK: - Stats Header (legacy)
     private var statsHeader: some View {
         HStack(spacing: 12) {
             StatCard(

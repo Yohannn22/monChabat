@@ -40,7 +40,7 @@ struct monChabatApp: App {
                 .environmentObject(appState)
                 .environmentObject(zmanimService)
                 .environmentObject(notificationManager)
-                .preferredColorScheme(appState.isDarkMode ? .dark : nil)
+                .preferredColorScheme(appState.appearanceMode.colorScheme)
         }
         .modelContainer(sharedModelContainer)
     }
@@ -48,9 +48,14 @@ struct monChabatApp: App {
 
 // MARK: - App State
 class AppState: ObservableObject {
-    @Published var isDarkMode: Bool {
+    @Published var appearanceMode: AppearanceMode {
         didSet {
-            UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode")
+            UserDefaults.standard.set(appearanceMode.rawValue, forKey: "appearanceMode")
+        }
+    }
+    @Published var defaultServings: Int {
+        didSet {
+            UserDefaults.standard.set(defaultServings, forKey: "defaultServings")
         }
     }
     @Published var isPanicMode: Bool = false
@@ -65,7 +70,23 @@ class AppState: ObservableObject {
         case settings
     }
     
+    enum AppearanceMode: String, CaseIterable {
+        case system = "Automatique"
+        case light = "Clair"
+        case dark = "Sombre"
+        
+        var colorScheme: ColorScheme? {
+            switch self {
+            case .system: return nil
+            case .light: return .light
+            case .dark: return .dark
+            }
+        }
+    }
+    
     init() {
-        self.isDarkMode = UserDefaults.standard.bool(forKey: "isDarkMode")
+        let savedMode = UserDefaults.standard.string(forKey: "appearanceMode") ?? AppearanceMode.system.rawValue
+        self.appearanceMode = AppearanceMode(rawValue: savedMode) ?? .system
+        self.defaultServings = UserDefaults.standard.object(forKey: "defaultServings") as? Int ?? 4
     }
 }

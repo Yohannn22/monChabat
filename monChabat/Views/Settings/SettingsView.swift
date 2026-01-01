@@ -9,6 +9,8 @@ import SwiftUI
 import StoreKit
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var systemColorScheme
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var zmanimService: ZmanimService
     @EnvironmentObject var notificationManager: NotificationManager
@@ -107,11 +109,30 @@ struct SettingsView: View {
                 
                 // Appearance Section
                 Section("Apparence") {
-                    Toggle(isOn: $appState.isDarkMode) {
-                        Label("Mode sombre", systemImage: "moon.fill")
+                    Picker(selection: $appState.appearanceMode) {
+                        ForEach(AppState.AppearanceMode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    } label: {
+                        Label("Thème", systemImage: "circle.lefthalf.filled")
                     }
                 }
-                .tint(Color.shabGold)
+                
+                // Recettes Section
+                Section {
+                    Stepper(value: $appState.defaultServings, in: 1...20) {
+                        HStack {
+                            Label("Personnes par défaut", systemImage: "person.2")
+                            Spacer()
+                            Text("\(appState.defaultServings)")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("Recettes")
+                } footer: {
+                    Text("Les quantités des recettes seront adaptées à ce nombre de personnes")
+                }
                 
                 // About Section
                 Section("À propos") {
@@ -215,7 +236,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.0.0")
+                        Text("1.0")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -225,6 +246,15 @@ struct SettingsView: View {
                 ToolbarItem(placement: .principal) {
                     Text("Réglages")
                         .font(.headline)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .sheet(isPresented: $showingDatePicker) {
@@ -242,6 +272,7 @@ struct SettingsView: View {
                 CitySearchSheet(zmanimService: zmanimService)
                     .presentationDetents([.large])
             }
+            .preferredColorScheme(appState.appearanceMode == .system ? systemColorScheme : appState.appearanceMode.colorScheme)
         }
     }
     
