@@ -7,6 +7,7 @@
 
 import SwiftUI
 import StoreKit
+import Combine
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -166,6 +167,36 @@ struct SettingsView: View {
                         }
                     }
                     .foregroundStyle(.primary)
+                }
+                
+                // Soutenir le projet
+                Section {
+                    NavigationLink {
+                        SupportProjectView()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "heart.fill")
+                                .font(.title3)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.purple, .pink],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Soutenir le Projet")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                Text("Un petit geste, un grand merci !")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Hakarat HaTov")
                 }
                 
                 // Mes autres apps
@@ -711,6 +742,533 @@ class AppStoreHelper: NSObject, SKStoreProductViewControllerDelegate {
     
     func productViewControllerDidFinish(_ viewController: SKStoreProductViewController) {
         viewController.dismiss(animated: true)
+    }
+}
+
+// MARK: - Support Project View
+
+struct SupportProjectView: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @StateObject private var storeManager = DonationStoreManager()
+    @State private var showThankYou = false
+    @State private var selectedDonation: DonationType?
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // En-tête avec icône
+                headerSection
+                
+                // Message personnel
+                messageSection
+                
+                // Boutons de don
+                donationButtons
+                
+                // Info Apple
+                appleInfoSection
+                
+                // Remerciement final
+                closingSection
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 20)
+        }
+        .background(colorScheme == .light ? Color(.systemGroupedBackground) : Color(.systemBackground))
+        .navigationTitle("Soutenir le Projet")
+        .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            if showThankYou {
+                ThankYouOverlay {
+                    withAnimation(.spring(response: 0.3)) {
+                        showThankYou = false
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Header
+    private var headerSection: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.shabGold, Color.shabCandleOrange],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 80, height: 80)
+                    .shadow(color: Color.shabGold.opacity(0.3), radius: 15)
+                
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 35))
+                    .foregroundStyle(.white)
+            }
+            
+            VStack(spacing: 6) {
+                Text("Hakarat Ha-Tov")
+                    .font(.title2.bold())
+                    .foregroundStyle(.primary)
+                
+                Text("הַכָּרַת הַטּוֹב")
+                    .font(.title3)
+                    .foregroundStyle(Color.shabGold)
+                
+                Text("Pourquoi ce prix unique ?")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+    }
+    
+    // MARK: - Message Section
+    private var messageSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Cher utilisateur,")
+                .font(.headline)
+                .foregroundStyle(.primary)
+            
+            Text("Nous avons fait le choix conscient de proposer cette application gratuitement, afin que l'aspect financier ne soit jamais un obstacle à la préparation d'un Chabat serein.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(4)
+            
+            Text("Cependant, développer, maintenir et améliorer une application de qualité demande du temps, de l'énergie et des ressources techniques continues.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(4)
+        }
+        .padding(20)
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorScheme == .light ? Color.white : Color(white: 0.12))
+                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
+        }
+    }
+    
+    // MARK: - Donation Buttons
+    private var donationButtons: some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: "hands.sparkles.fill")
+                    .foregroundStyle(Color.shabGold)
+                Text("Devenir Partenaire")
+                    .font(.headline)
+            }
+            
+            Text("Si vous appréciez cet outil et qu'il vous apporte de la sérénité au quotidien, vous avez la possibilité de faire un geste supplémentaire.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            
+            VStack(spacing: 12) {
+                DonationButton(
+                    emoji: "☕",
+                    title: "Offrir un café",
+                    subtitle: "Petit geste, grand merci !",
+                    price: "3,00 €",
+                    color: .brown,
+                    isLoading: storeManager.purchaseInProgress && selectedDonation == .coffee
+                ) {
+                    selectedDonation = .coffee
+                    purchaseDonation(.coffee)
+                }
+                
+                DonationButton(
+                    emoji: "🥗",
+                    title: "Offrir un repas",
+                    subtitle: "Un soutien précieux",
+                    price: "10,00 €",
+                    color: .green,
+                    isLoading: storeManager.purchaseInProgress && selectedDonation == .meal
+                ) {
+                    selectedDonation = .meal
+                    purchaseDonation(.meal)
+                }
+                
+                DonationButton(
+                    emoji: "💎",
+                    title: "Pilier de la Mitsva",
+                    subtitle: "Chiffre \"Haï\" (חי) - La Vie",
+                    price: "18,00 €",
+                    color: Color.shabGold,
+                    isPremium: true,
+                    isLoading: storeManager.purchaseInProgress && selectedDonation == .chai
+                ) {
+                    selectedDonation = .chai
+                    purchaseDonation(.chai)
+                }
+            }
+            
+            // Ce que le don permet
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Votre soutien nous aide à :")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                
+                SupportBenefitRow(icon: "arrow.triangle.2.circlepath", text: "Maintenir l'app à jour avec iOS")
+                SupportBenefitRow(icon: "sparkles", text: "Ajouter de nouvelles fonctionnalités")
+                SupportBenefitRow(icon: "heart.fill", text: "Améliorer l'expérience de tous")
+            }
+            .padding(16)
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.shabGold.opacity(0.08))
+            }
+        }
+        .padding(20)
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorScheme == .light ? Color.white : Color(white: 0.12))
+                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
+        }
+    }
+    
+    // MARK: - Apple Info
+    private var appleInfoSection: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "apple.logo")
+                .foregroundStyle(.secondary)
+            Text("Les paiements sont sécurisés par Apple. Ce don est un achat unique et non un abonnement.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .background {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.gray.opacity(0.1))
+        }
+    }
+    
+    // MARK: - Closing
+    private var closingSection: some View {
+        VStack(spacing: 12) {
+            Text("Merci pour votre confiance et votre soutien.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Text("Qu'Hachem bénisse votre foyer avec joie, santé et un Chabat serein ✨")
+                .font(.subheadline.italic())
+                .foregroundStyle(Color.shabGold)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 8)
+    }
+    
+    private func purchaseDonation(_ type: DonationType) {
+        Task {
+            let success = await storeManager.purchase(type)
+            if success {
+                HapticManager.notification(.success)
+                withAnimation(.spring(response: 0.5)) {
+                    showThankYou = true
+                }
+            }
+            selectedDonation = nil
+        }
+    }
+}
+
+// MARK: - Donation Type
+
+enum DonationType: String {
+    case coffee = "com.monchabat.donation.coffee"
+    case meal = "com.monchabat.donation.meal"
+    case chai = "com.monchabat.donation.chai"
+}
+
+// MARK: - Donation Button
+
+struct DonationButton: View {
+    let emoji: String
+    let title: String
+    let subtitle: String
+    let price: String
+    let color: Color
+    var isPremium: Bool = false
+    var isLoading: Bool = false
+    let action: () -> Void
+    
+    @Environment(\.colorScheme) private var colorScheme
+    
+    var body: some View {
+        Button(action: {
+            HapticManager.impact(.medium)
+            action()
+        }) {
+            HStack(spacing: 14) {
+                // Emoji
+                Text(emoji)
+                    .font(.system(size: 28))
+                    .frame(width: 44, height: 44)
+                    .background {
+                        Circle()
+                            .fill(color.opacity(0.15))
+                    }
+                
+                // Texte
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                // Prix ou loading
+                if isLoading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                } else {
+                    Text(price)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background {
+                            Capsule()
+                                .fill(
+                                    isPremium
+                                    ? LinearGradient(colors: [Color.shabGold, Color.shabCandleOrange], startPoint: .leading, endPoint: .trailing)
+                                    : LinearGradient(colors: [color, color.opacity(0.8)], startPoint: .leading, endPoint: .trailing)
+                                )
+                        }
+                }
+            }
+            .padding(14)
+            .background {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(colorScheme == .light ? Color.white : Color(white: 0.15))
+                    .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+            }
+            .overlay {
+                if isPremium {
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(
+                            LinearGradient(colors: [Color.shabGold.opacity(0.5), Color.shabCandleOrange.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 2
+                        )
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoading)
+    }
+}
+
+// MARK: - Support Benefit Row
+
+struct SupportBenefitRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(Color.shabGold)
+                .frame(width: 20)
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Thank You Overlay
+
+struct ThankYouOverlay: View {
+    let onDismiss: () -> Void
+    @State private var showConfetti = true
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture { onDismiss() }
+            
+            VStack(spacing: 24) {
+                Image(systemName: "heart.circle.fill")
+                    .font(.system(size: 70))
+                    .foregroundStyle(
+                        LinearGradient(colors: [Color.shabGold, Color.shabCandleOrange], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .modifier(PulseModifier())
+                
+                VStack(spacing: 8) {
+                    Text("Toda Raba ! 💛")
+                        .font(.title.bold())
+                    
+                    Text("תודה רבה")
+                        .font(.title2)
+                        .foregroundStyle(Color.shabGold)
+                    
+                    Text("Votre générosité est une bénédiction.\nQu'Hachem vous le rende au centuple !")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                Button {
+                    onDismiss()
+                } label: {
+                    Text("Fermer")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 40)
+                        .padding(.vertical, 14)
+                        .background {
+                            Capsule()
+                                .fill(
+                                    LinearGradient(colors: [Color.shabGold, Color.shabCandleOrange], startPoint: .leading, endPoint: .trailing)
+                                )
+                        }
+                }
+            }
+            .padding(32)
+            .background {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(.ultraThinMaterial)
+            }
+            .padding(40)
+            
+            if showConfetti {
+                ConfettiView()
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+}
+
+// MARK: - Pulse Modifier
+
+struct PulseModifier: ViewModifier {
+    @State private var isPulsing = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isPulsing ? 1.1 : 1.0)
+            .animation(
+                .easeInOut(duration: 0.8)
+                .repeatForever(autoreverses: true),
+                value: isPulsing
+            )
+            .onAppear {
+                isPulsing = true
+            }
+    }
+}
+
+// MARK: - Confetti View
+
+struct ConfettiView: View {
+    @State private var confetti: [ConfettiPiece] = []
+    
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                ForEach(confetti) { piece in
+                    Text(piece.emoji)
+                        .font(.system(size: piece.size))
+                        .position(piece.position)
+                        .opacity(piece.opacity)
+                }
+            }
+            .onAppear {
+                createConfetti(in: geo.size)
+            }
+        }
+        .ignoresSafeArea()
+    }
+    
+    private func createConfetti(in size: CGSize) {
+        let emojis = ["🎉", "✨", "💛", "⭐️", "🌟", "💫", "🕯️"]
+        
+        for i in 0..<30 {
+            let piece = ConfettiPiece(
+                id: i,
+                emoji: emojis.randomElement() ?? "✨",
+                position: CGPoint(x: CGFloat.random(in: 0...size.width), y: -50),
+                size: CGFloat.random(in: 20...35),
+                opacity: 1.0
+            )
+            confetti.append(piece)
+            
+            // Animation de chute
+            withAnimation(.easeIn(duration: Double.random(in: 2...4)).delay(Double.random(in: 0...1))) {
+                if let index = confetti.firstIndex(where: { $0.id == piece.id }) {
+                    confetti[index].position.y = size.height + 50
+                    confetti[index].opacity = 0
+                }
+            }
+        }
+    }
+}
+
+struct ConfettiPiece: Identifiable {
+    let id: Int
+    let emoji: String
+    var position: CGPoint
+    let size: CGFloat
+    var opacity: Double
+}
+
+// MARK: - Donation Store Manager
+
+@MainActor
+class DonationStoreManager: ObservableObject {
+    @Published var purchaseInProgress = false
+    
+    func purchase(_ donationType: DonationType) async -> Bool {
+        purchaseInProgress = true
+        defer { purchaseInProgress = false }
+        
+        do {
+            // Récupérer le produit
+            let products = try await Product.products(for: [donationType.rawValue])
+            guard let product = products.first else {
+                print("❌ Produit non trouvé: \(donationType.rawValue)")
+                return false
+            }
+            
+            // Effectuer l'achat
+            let result = try await product.purchase()
+            
+            switch result {
+            case .success(let verification):
+                // Vérifier la transaction
+                switch verification {
+                case .verified(let transaction):
+                    // Transaction vérifiée, terminer la transaction
+                    await transaction.finish()
+                    print("✅ Don effectué avec succès: \(donationType.rawValue)")
+                    return true
+                case .unverified:
+                    print("⚠️ Transaction non vérifiée")
+                    return false
+                }
+            case .userCancelled:
+                print("ℹ️ Achat annulé par l'utilisateur")
+                return false
+            case .pending:
+                print("⏳ Achat en attente")
+                return false
+            @unknown default:
+                return false
+            }
+        } catch {
+            print("❌ Erreur d'achat: \(error)")
+            return false
+        }
     }
 }
 
